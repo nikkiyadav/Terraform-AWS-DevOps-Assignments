@@ -1,0 +1,28 @@
+# Terraform downloaded providers
+**/.terraform/
+
+# Terraform state and plans
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Local Terraform variable files
+*.tfvars
+*.tfvars.json
+
+# Local secrets and keys
+*.pem
+*.key
+
+# Temporary files
+~$*
+*.tmp
+
+# OS/editor files
+.DS_Store
+Thumbs.db

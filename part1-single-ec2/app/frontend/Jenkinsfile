@@ -1,0 +1,99 @@
+
+pipeline {
+    agent any
+
+    environment {
+        EC2_HOST = '13.60.23.197'
+        PROJECT_DIR = '/home/ubuntu/aws-fullstack-project'
+    }
+
+    stages {
+        stage('Pull Latest Code') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'aws-ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    bat '''
+                        icacls "%SSH_KEY%" /inheritance:r
+                        if errorlevel 1 exit /b 1
+
+                        icacls "%SSH_KEY%" /grant:r "*S-1-5-18:F"
+                        if errorlevel 1 exit /b 1
+
+                        ssh -i "%SSH_KEY%" -o BatchMode=yes -o StrictHostKeyChecking=accept-new %SSH_USER%@%EC2_HOST% "flock -x /tmp/student-project-git.lock sh -c 'cd /home/ubuntu/aws-fullstack-project && git pull origin main && git status'"
+                        '''
+                }
+            }
+        }
+
+        stage('Build Express Docker Image') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'aws-ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    bat '''
+                        icacls "%SSH_KEY%" /inheritance:r
+                        if errorlevel 1 exit /b 1
+
+                        icacls "%SSH_KEY%" /grant:r "*S-1-5-18:F"
+                        if errorlevel 1 exit /b 1
+
+                        ssh -i "%SSH_KEY%" -o BatchMode=yes -o StrictHostKeyChecking=accept-new %SSH_USER%@%EC2_HOST% "cd %PROJECT_DIR% && docker build -t student-frontend:v3 ./frontend"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Express Container') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'aws-ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    bat '''
+                        icacls "%SSH_KEY%" /inheritance:r
+                        if errorlevel 1 exit /b 1
+
+                        icacls "%SSH_KEY%" /grant:r "*S-1-5-18:F"
+                        if errorlevel 1 exit /b 1
+
+                        ssh -i "%SSH_KEY%" -o BatchMode=yes -o StrictHostKeyChecking=accept-new %SSH_USER%@%EC2_HOST% "docker rm -f frontend 2>/dev/null || true; docker run -d --name frontend --network student-network -p 3000:3000 -e BACKEND_URL=http://backend:5000 student-frontend:v3 && docker ps --filter name=frontend"
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'aws-ec2-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    bat '''
+                        icacls "%SSH_KEY%" /inheritance:r
+                        if errorlevel 1 exit /b 1
+
+                        icacls "%SSH_KEY%" /grant:r "*S-1-5-18:F"
+                        if errorlevel 1 exit /b 1
+
+                        ssh -i "%SSH_KEY%" -o BatchMode=yes -o StrictHostKeyChecking=accept-new %SSH_USER%@%EC2_HOST% "sleep 3 && curl -fsS http://localhost:3000/health && curl -fsS http://localhost:3000/api/students"
+                    '''
+                }
+            }
+        }
+    }
+}
