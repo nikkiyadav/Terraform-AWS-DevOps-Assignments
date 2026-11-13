@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Registration</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f1f5f9;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            max-width: 400px;
+            margin: auto;
+            border-radius: 12px;
+        }
+
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 10px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Student Registration</h2>
+
+    <form id="studentForm">
+        <input type="text" id="name"
+               placeholder="Student Name" required>
+
+        <input type="email" id="email"
+               placeholder="Email Address" required>
+
+        <button type="submit">Register Student</button>
+    </form>
+
+    <div id="result"></div>
+
+    <h3>Registered Students</h3>
+    <ul id="students"></ul>
+</div>
+
+<script>
+    async function loadStudents() {
+        const response = await fetch("/api/students");
+        const students = await response.json();
+
+        document.getElementById("students").innerHTML =
+            students.map(s =>
+                `<li>${s.name} - ${s.email}</li>`
+            ).join("");
+    }
+
+    document.getElementById("studentForm")
+        .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const student = {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value
+        };
+
+        const response = await fetch("/api/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(student)
+        });
+
+        const data = await response.json();
+
+        document.getElementById("result").innerText =
+            data.message || data.error;
+
+        if (response.ok) {
+            this.reset();
+            loadStudents();
+        }
+    });
+
+    loadStudents();
+</script>
+
+</body>
+</html>

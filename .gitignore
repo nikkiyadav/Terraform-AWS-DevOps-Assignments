@@ -26,3 +26,15 @@ crash.*.log
 # OS/editor files
 .DS_Store
 Thumbs.db
+
+# Node.js dependencies
+**/node_modules/
+
+# Python cache files
+**/__pycache__/
+*.py[cod]
+
+# Local environment files
+.env
+.env.*
+!.env.example
